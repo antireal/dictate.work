@@ -1,0 +1,6 @@
+{
+  "extends": "eslint-config-accurapp",
+  "rules": {
+    "semi": true
+  }
+}
