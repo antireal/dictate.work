@@ -31,4 +31,10 @@ ul li a {
   text-decoration: none;
   font-size: 10px;
   color: #fff;
+  transition: 0.1s all;
+}
+
+ul li a:hover {
+  background: #fff;
+  color: #0a0d30;
 }
