@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 import gradient_mat_frag from "./shaders/gradient_mat.frag";
+// import gradient_mat_tex_frag from "./shaders/gradient_mat_tex.frag";
 import gradient_mat_vert from "./shaders/gradient_mat.vert";
 
 import { MeshLine, MeshLineMaterial } from "three.meshline";
@@ -19,17 +20,21 @@ const DIRS = [
 const flip_dir = i => (i % 2 ? i - 1 : i + 1);
 
 export default class RandomMesh extends THREE.Group {
-  constructor(webgl, simplex, options) {
+  constructor(webgl, simplex, camera, options) {
     super(options);
     // these can be used also in other methods
     this.webgl = webgl;
     this.options = options;
+    this.camera = camera;
     this.simplex_octaves = SimplexOctaves(simplex);
     this.seed = Math.random() * 25565;
+
+    this.raycaster = new THREE.Raycaster();
 
     const {
       color,
       color_end,
+      texture,
       curve,
       radius,
       faces,
@@ -57,6 +62,13 @@ export default class RandomMesh extends THREE.Group {
     }
     geometry.computeBoundingSphere();
 
+    // const overlay_tex = texture;
+    // if (overlay_tex) {
+    //   overlay_tex.wrapS = THREE.RepeatWrapping;
+    //   overlay_tex.wrapT = THREE.RepeatWrapping;
+    //   overlay_tex.repeat.set(8, 8);
+    // }
+
     const material = new THREE.ShaderMaterial({
       uniforms: {
         resolution: { value: new THREE.Vector2() },
@@ -64,11 +76,13 @@ export default class RandomMesh extends THREE.Group {
         color_end: { value: color_end || color },
         curve: { value: curve || 1 },
         cursor_pos: { value: new THREE.Vector2() },
+        // overlay_tex: texture && { type: "t", value: overlay_tex },
       },
       vertexShader: gradient_mat_vert,
-      fragmentShader: gradient_mat_frag,
+      fragmentShader: texture ? gradient_mat_tex_frag : gradient_mat_frag,
     });
     this.material = material;
+    // if (overlay_tex) material.side = THREE.DoubleSide;
     material.uniforms.resolution.value.set(
       webgl.width * webgl.pixelRatio,
       webgl.height * webgl.pixelRatio
@@ -83,7 +97,6 @@ export default class RandomMesh extends THREE.Group {
       this.line_material = new MeshLineMaterial({
         lineWidth: 0.01,
         color: new THREE.Color(color),
-        // sizeAttenuation: 0,
         transparent: true,
         opacity: 0.5,
       });
@@ -144,6 +157,13 @@ export default class RandomMesh extends THREE.Group {
     this.material.uniforms.cursor_pos.value.set(
       x / this.webgl.width,
       y / this.webgl.width
+    );
+  }
+
+  resize({ width, height, pixelRatio }) {
+    this.material.uniforms.resolution.value.set(
+      width * pixelRatio,
+      height * pixelRatio
     );
   }
 }

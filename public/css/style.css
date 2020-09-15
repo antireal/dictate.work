@@ -3,3 +3,32 @@ canvas {
   top: 0;
   left: 0;
 }
+
+main {
+  position: fixed;
+  font-family: "Share Tech Mono", monospace;
+  color: #fff;
+  margin-left: 3em;
+  margin-top: 1.5em;
+  pointer-events: painted;
+}
+
+header {
+  pointer-events: none;
+}
+
+header h1 {
+  margin-top: 1.5em;
+  font-size: 10px;
+}
+
+ul {
+  padding: 0;
+  list-style: none;
+}
+
+ul li a {
+  text-decoration: none;
+  font-size: 10px;
+  color: #fff;
+}

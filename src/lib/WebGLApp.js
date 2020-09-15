@@ -1,27 +1,27 @@
 // Inspiration for this class goes to Matt DesLauriers @mattdesl,
 // really awesome dude, give him a follow!
 // https://github.com/mattdesl/threejs-app/blob/master/src/webgl/WebGLApp.js
-import * as THREE from 'three'
-import createOrbitControls from 'orbit-controls'
-import createTouches from 'touches'
-import dataURIToBlob from 'datauritoblob'
-import Stats from 'stats.js'
-import State from 'controls-state'
-import wrapGUI from 'controls-gui'
-import { getGPUTier } from 'detect-gpu'
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
-import CannonDebugRenderer from './CannonDebugRenderer'
+import * as THREE from "three";
+import createOrbitControls from "orbit-controls";
+import createTouches from "touches";
+import dataURIToBlob from "datauritoblob";
+import Stats from "stats.js";
+import State from "controls-state";
+import wrapGUI from "controls-gui";
+import { getGPUTier } from "detect-gpu";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
+import CannonDebugRenderer from "./CannonDebugRenderer";
 
 export default class WebGLApp {
-  #updateListeners = []
-  #tmpTarget = new THREE.Vector3()
-  #lastTime
-  #width
-  #height
+  #updateListeners = [];
+  #tmpTarget = new THREE.Vector3();
+  #lastTime;
+  #width;
+  #height;
 
   constructor({
-    background = '#000',
+    background = "#000",
     backgroundAlpha = 1,
     fov = 45,
     near = 0.01,
@@ -36,43 +36,43 @@ export default class WebGLApp {
       preserveDrawingBuffer: true,
       failIfMajorPerformanceCaveat: true,
       ...options,
-    })
+    });
 
-    this.renderer.sortObjects = false
-    this.canvas = this.renderer.domElement
+    this.renderer.sortObjects = false;
+    this.canvas = this.renderer.domElement;
 
-    this.renderer.setClearColor(background, backgroundAlpha)
+    this.renderer.setClearColor(background, backgroundAlpha);
 
     if (options.xr) {
-      this.renderer.xr.enabled = true
+      this.renderer.xr.enabled = true;
     }
 
     // save the fixed dimensions
-    this.#width = options.width
-    this.#height = options.height
+    this.#width = options.width;
+    this.#height = options.height;
 
     // clamp pixel ratio for performance
-    this.maxPixelRatio = options.maxPixelRatio || 2
+    this.maxPixelRatio = options.maxPixelRatio || 2;
     // clamp delta to stepping anything too far forward
-    this.maxDeltaTime = options.maxDeltaTime || 1 / 30
+    this.maxDeltaTime = options.maxDeltaTime || 1 / 30;
 
     // setup a basic camera
-    this.camera = new THREE.PerspectiveCamera(fov, 1, near, far)
+    this.camera = new THREE.PerspectiveCamera(fov, 1, near, far);
 
-    this.scene = new THREE.Scene()
+    this.scene = new THREE.Scene();
 
-    this.gl = this.renderer.getContext()
+    this.gl = this.renderer.getContext();
 
-    this.time = 0
-    this.isRunning = false
-    this.#lastTime = performance.now()
+    this.time = 0;
+    this.isRunning = false;
+    this.#lastTime = performance.now();
 
     // handle resize events
-    window.addEventListener('resize', this.resize)
-    window.addEventListener('orientationchange', this.resize)
+    window.addEventListener("resize", this.resize);
+    window.addEventListener("orientationchange", this.resize);
 
     // force an initial resize event
-    this.resize()
+    this.resize();
 
     // __________________________ADDONS__________________________
 
@@ -80,22 +80,24 @@ export default class WebGLApp {
     this.touchHandler = createTouches(this.canvas, {
       target: this.canvas,
       filtered: true,
-    })
-    this.isDragging = false
-    this.touchHandler.on('start', (ev, pos) => {
-      this.isDragging = true
-      this.traverse('onPointerDown', ev, pos)
-    })
-    this.touchHandler.on('move', (ev, pos) => this.traverse('onPointerMove', ev, pos))
-    this.touchHandler.on('end', (ev, pos) => {
-      this.isDragging = false
-      this.traverse('onPointerUp', ev, pos)
-    })
+    });
+    this.isDragging = false;
+    this.touchHandler.on("start", (ev, pos) => {
+      this.isDragging = true;
+      this.traverse("onPointerDown", ev, pos);
+    });
+    this.touchHandler.on("move", (ev, pos) =>
+      this.traverse("onPointerMove", ev, pos)
+    );
+    this.touchHandler.on("end", (ev, pos) => {
+      this.isDragging = false;
+      this.traverse("onPointerUp", ev, pos);
+    });
 
     // expose a composer for postprocessing passes
     if (options.postprocessing) {
-      this.composer = new EffectComposer(this.renderer)
-      this.composer.addPass(new RenderPass(this.scene, this.camera))
+      this.composer = new EffectComposer(this.renderer);
+      this.composer.addPass(new RenderPass(this.scene, this.camera));
     }
 
     // set up a simple orbit controller
@@ -104,35 +106,42 @@ export default class WebGLApp {
         element: this.canvas,
         parent: window,
         distance: 5,
-        ...(options.orbitControls instanceof Object ? options.orbitControls : {}),
-      })
+        ...(options.orbitControls instanceof Object
+          ? options.orbitControls
+          : {}),
+      });
 
       // move the camera position accordingly to the orbitcontrols options
-      this.camera.position.fromArray(this.orbitControls.position)
-      this.camera.lookAt(new THREE.Vector3().fromArray(this.orbitControls.target))
+      this.camera.position.fromArray(this.orbitControls.position);
+      this.camera.lookAt(
+        new THREE.Vector3().fromArray(this.orbitControls.target)
+      );
     }
 
     // Attach the Cannon physics engine
     if (options.world) {
-      this.world = options.world
+      this.world = options.world;
       if (options.showWorldWireframes) {
-        this.cannonDebugRenderer = new CannonDebugRenderer(this.scene, this.world)
+        this.cannonDebugRenderer = new CannonDebugRenderer(
+          this.scene,
+          this.world
+        );
       }
     }
 
     // show the fps meter
     if (options.showFps) {
-      this.stats = new Stats()
-      this.stats.showPanel(0)
-      document.body.appendChild(this.stats.dom)
+      this.stats = new Stats();
+      this.stats.showPanel(0);
+      document.body.appendChild(this.stats.dom);
     }
 
     // initialize the controls-state
     if (options.controls) {
-      const controlsState = State(options.controls)
+      const controlsState = State(options.controls);
       this.controls = options.hideControls
         ? controlsState
-        : wrapGUI(controlsState, { expanded: !options.closeControls })
+        : wrapGUI(controlsState, { expanded: !options.closeControls });
 
       // add the custom controls-gui styles
       if (!options.hideControls) {
@@ -146,221 +155,229 @@ export default class WebGLApp {
           [class^="controlPanel-"] [class*="__field--button"] > button::before {
             content: initial !important;
           }
-        `
-        const style = document.createElement('style')
-        style.type = 'text/css'
-        style.innerHTML = styles
-        document.head.appendChild(style)
+        `;
+        const style = document.createElement("style");
+        style.type = "text/css";
+        style.innerHTML = styles;
+        document.head.appendChild(style);
       }
     }
 
     // detect the gpu info
-    const gpu = getGPUTier({ glContext: this.renderer.getContext() })
+    const gpu = getGPUTier({ glContext: this.renderer.getContext() });
     this.gpu = {
       name: gpu.type,
       tier: Number(gpu.tier.slice(-1)),
-      isMobile: gpu.tier.toLowerCase().includes('mobile'),
-    }
+      isMobile: gpu.tier.toLowerCase().includes("mobile"),
+    };
   }
 
   get width() {
-    return this.#width || window.innerWidth
+    return this.#width || window.innerWidth;
   }
 
   get height() {
-    return this.#height || window.innerHeight
+    return this.#height || window.innerHeight;
   }
 
   get pixelRatio() {
-    return Math.min(this.maxPixelRatio, window.devicePixelRatio)
+    return Math.min(this.maxPixelRatio, window.devicePixelRatio);
   }
 
-  resize = ({ width = this.width, height = this.height, pixelRatio = this.pixelRatio } = {}) => {
+  resize = ({
+    width = this.width,
+    height = this.height,
+    pixelRatio = this.pixelRatio,
+  } = {}) => {
     // update pixel ratio if necessary
     if (this.renderer.getPixelRatio() !== pixelRatio) {
-      this.renderer.setPixelRatio(pixelRatio)
+      this.renderer.setPixelRatio(pixelRatio);
     }
 
     // setup new size & update camera aspect if necessary
-    this.renderer.setSize(width, height)
+    this.renderer.setSize(width, height);
     if (this.camera.isPerspectiveCamera) {
-      this.camera.aspect = width / height
+      this.camera.aspect = width / height;
     }
-    this.camera.updateProjectionMatrix()
+    this.camera.updateProjectionMatrix();
 
     // resize also the composer
     if (this.composer) {
-      this.composer.setSize(pixelRatio * width, pixelRatio * height)
+      this.composer.setSize(pixelRatio * width, pixelRatio * height);
     }
 
     // recursively tell all child objects to resize
-    this.scene.traverse((obj) => {
-      if (typeof obj.resize === 'function') {
+    this.scene.traverse(obj => {
+      if (typeof obj.resize === "function") {
         obj.resize({
           width,
           height,
           pixelRatio,
-        })
+        });
       }
-    })
+    });
 
     // draw a frame to ensure the new size has been registered visually
-    this.draw()
-    return this
-  }
+    this.draw();
+    return this;
+  };
 
   // convenience function to trigger a PNG download of the canvas
-  saveScreenshot = ({ width = 2560, height = 1440, fileName = 'image.png' } = {}) => {
+  saveScreenshot = ({
+    width = 2560,
+    height = 1440,
+    fileName = "image.png",
+  } = {}) => {
     // force a specific output size
-    this.resize({ width, height, pixelRatio: 1 })
-    this.draw()
+    this.resize({ width, height, pixelRatio: 1 });
+    this.draw();
 
-    const dataURI = this.canvas.toDataURL('image/png')
+    const dataURI = this.canvas.toDataURL("image/png");
 
     // reset to default size
-    this.resize()
-    this.draw()
+    this.resize();
+    this.draw();
 
     // save
-    saveDataURI(fileName, dataURI)
-  }
+    saveDataURI(fileName, dataURI);
+  };
 
   update = (dt, time, xrframe) => {
     if (this.orbitControls) {
-      this.orbitControls.update()
+      this.orbitControls.update();
 
       // reposition to orbit controls
-      this.camera.up.fromArray(this.orbitControls.up)
-      this.camera.position.fromArray(this.orbitControls.position)
-      this.#tmpTarget.fromArray(this.orbitControls.target)
-      this.camera.lookAt(this.#tmpTarget)
+      this.camera.up.fromArray(this.orbitControls.up);
+      this.camera.position.fromArray(this.orbitControls.position);
+      this.#tmpTarget.fromArray(this.orbitControls.target);
+      this.camera.lookAt(this.#tmpTarget);
     }
 
     // recursively tell all child objects to update
-    this.scene.traverse((obj) => {
-      if (typeof obj.update === 'function') {
-        obj.update(dt, time, xrframe)
+    this.scene.traverse(obj => {
+      if (typeof obj.update === "function") {
+        obj.update(dt, time, xrframe);
       }
-    })
+    });
 
     if (this.world) {
       // update the Cannon physics engine
-      this.world.step(1 / 60, dt)
+      this.world.step(1 / 60, dt);
 
       // update the debug wireframe renderer
       if (this.cannonDebugRenderer) {
-        this.cannonDebugRenderer.update()
+        this.cannonDebugRenderer.update();
       }
 
       // recursively tell all child bodies to update
-      this.world.bodies.forEach((body) => {
-        if (typeof body.update === 'function') {
-          body.update(dt, time)
+      this.world.bodies.forEach(body => {
+        if (typeof body.update === "function") {
+          body.update(dt, time);
         }
-      })
+      });
     }
 
     // call the update listeners
-    this.#updateListeners.forEach((fn) => fn(dt, time, xrframe))
+    this.#updateListeners.forEach(fn => fn(dt, time, xrframe));
 
-    return this
-  }
+    return this;
+  };
 
   onUpdate(fn) {
-    this.#updateListeners.push(fn)
+    this.#updateListeners.push(fn);
   }
 
   offUpdate(fn) {
-    const index = this.#updateListeners.indexOf(fn)
+    const index = this.#updateListeners.indexOf(fn);
 
     // return silently if the function can't be found
     if (index === -1) {
-      return
+      return;
     }
 
-    this.#updateListeners.splice(index, 1)
+    this.#updateListeners.splice(index, 1);
   }
 
   draw = () => {
     if (this.composer) {
       // make sure to always render the last pass
       this.composer.passes.forEach((pass, i, passes) => {
-        const isLastElement = i === passes.length - 1
+        const isLastElement = i === passes.length - 1;
 
         if (isLastElement) {
-          pass.renderToScreen = true
+          pass.renderToScreen = true;
         } else {
-          pass.renderToScreen = false
+          pass.renderToScreen = false;
         }
-      })
+      });
 
-      this.composer.render()
+      this.composer.render();
     } else {
-      this.renderer.render(this.scene, this.camera)
+      this.renderer.render(this.scene, this.camera);
     }
-    return this
-  }
+    return this;
+  };
 
   start = () => {
-    if (this.isRunning) return
-    this.renderer.setAnimationLoop(this.animate)
-    this.isRunning = true
-    return this
-  }
+    if (this.isRunning) return;
+    this.renderer.setAnimationLoop(this.animate);
+    this.isRunning = true;
+    return this;
+  };
 
   stop = () => {
-    if (!this.isRunning) return
-    this.renderer.setAnimationLoop(null)
-    this.isRunning = false
-    return this
-  }
+    if (!this.isRunning) return;
+    this.renderer.setAnimationLoop(null);
+    this.isRunning = false;
+    return this;
+  };
 
   animate = (now, xrframe) => {
-    if (!this.isRunning) return
+    if (!this.isRunning) return;
 
-    if (this.stats) this.stats.begin()
+    if (this.stats) this.stats.begin();
 
-    const dt = Math.min(this.maxDeltaTime, (now - this.#lastTime) / 1000)
-    this.time += dt
-    this.#lastTime = now
-    this.update(dt, this.time, xrframe)
-    this.draw()
+    const dt = Math.min(this.maxDeltaTime, (now - this.#lastTime) / 1000);
+    this.time += dt;
+    this.#lastTime = now;
+    this.update(dt, this.time, xrframe);
+    this.draw();
 
-    if (this.stats) this.stats.end()
-  }
+    if (this.stats) this.stats.end();
+  };
 
   traverse = (fn, ...args) => {
-    this.scene.traverse((child) => {
-      if (typeof child[fn] === 'function') {
-        child[fn].apply(child, args)
+    this.scene.traverse(child => {
+      if (typeof child[fn] === "function") {
+        child[fn].apply(child, args);
       }
-    })
-  }
+    });
+  };
 
   get cursor() {
-    return this.canvas.style.cursor
+    return this.canvas.style.cursor;
   }
 
   set cursor(cursor) {
     if (cursor) {
-      this.canvas.style.cursor = cursor
+      this.canvas.style.cursor = cursor;
     } else {
-      this.canvas.style.cursor = null
+      this.canvas.style.cursor = null;
     }
   }
 }
 
 function saveDataURI(name, dataURI) {
-  const blob = dataURIToBlob(dataURI)
+  const blob = dataURIToBlob(dataURI);
 
   // force download
-  const link = document.createElement('a')
-  link.download = name
-  link.href = window.URL.createObjectURL(blob)
+  const link = document.createElement("a");
+  link.download = name;
+  link.href = window.URL.createObjectURL(blob);
   link.onclick = setTimeout(() => {
-    window.URL.revokeObjectURL(blob)
-    link.removeAttribute('href')
-  }, 0)
+    window.URL.revokeObjectURL(blob);
+    link.removeAttribute("href");
+  }, 0);
 
-  link.click()
+  link.click();
 }
