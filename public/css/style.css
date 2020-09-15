@@ -1,3 +1,7 @@
+body {
+  background: #0a0d30;
+}
+
 canvas {
   position: fixed;
   top: 0;

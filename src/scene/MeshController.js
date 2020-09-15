@@ -94,8 +94,8 @@ export default class MeshController extends THREE.Group {
     }
     this.regen_timer -= dt;
 
-    const rotate_speed = 0.04;
-    const rotate_inertia = 0.9;
+    const rotate_speed = 0.065;
+    const rotate_inertia = 0.95;
 
     // rotate group
     this.rotateY(this.mouseDelta[0] * dt * rotate_speed);
